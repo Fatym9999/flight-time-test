@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Журнал в аккаунте — Калькулятор налёта</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #151b24;
+    --surface-2: #1c2430;
+    --line: #263041;
+    --text: #e8ecf2;
+    --muted: #7f8b9c;
+    --accent: #f0b44c;
+    --accent-ink: #1a1304;
+    --danger: #e5646b;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); color-scheme: dark; }
+  *, *::before, *::after { box-sizing: inherit; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  main {
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 28px 18px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  /* Итог */
+  .account-link {
+    align-self: flex-end; color: var(--accent); font-size: 13px;
+    text-decoration: none; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px;
+  }
+  .account-link:hover { background: var(--surface); }
+  .account-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .total { padding: 8px 4px 4px; }
+  .total-label { color: var(--muted); font-size: 14px; font-weight: 500; }
+  .total-value {
+    margin: 6px 0 0;
+    font-size: 76px;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--accent);
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+  }
+  .total-value .unit {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--muted);
+    margin: 0 10px 0 6px;
+  }
+  .total-sub {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px 18px;
+    flex-wrap: wrap;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .total-sub b { color: var(--text); font-weight: 600; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .stat span { color: var(--muted); font-size: 14px; font-weight: 500; }
+  .stat b { font-size: 26px; font-weight: 800; letter-spacing: -0.01em; }
+
+  /* Ввод */
+  .entry {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field span { font-size: 13px; color: var(--muted); font-weight: 500; padding-left: 2px; }
+  .field.wide { grid-column: 1 / -1; }
+  input {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid transparent;
+    border-radius: 12px;
+    color: var(--text);
+    font: inherit;
+    font-size: 26px;
+    font-weight: 700;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color .15s, background .15s;
+  }
+  input.small { font-size: 20px; padding: 10px 14px; }
+  input::placeholder { color: #4a5568; font-weight: 600; }
+  input[type="text"].label-input { font-size: 16px; font-weight: 500; padding: 12px 14px; }
+  input:focus-visible { border-color: var(--accent); background: #202a38; }
+  input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+
+  .divider { grid-column: 1 / -1; height: 1px; background: var(--line); margin: 2px 0; }
+
+  .add {
+    grid-column: 1 / -1;
+    margin-top: 4px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 14px;
+    cursor: pointer;
+    transition: transform .08s, filter .15s;
+  }
+  .add:hover { filter: brightness(1.06); }
+  .add:active { transform: scale(0.985); }
+  .add:focus-visible, .ghost:focus-visible, .del:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+  .hint { grid-column: 1 / -1; color: var(--danger); font-size: 13px; margin: 0; }
+  .hint:empty { display: none; }
+
+  /* Список */
+  .list-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 4px 0;
+    color: var(--muted); font-size: 14px; font-weight: 500;
+  }
+  .ghost {
+    background: none; border: 0; color: var(--muted);
+    font: inherit; font-size: 14px; font-weight: 500;
+    padding: 6px 8px; margin: -6px -8px; border-radius: 8px; cursor: pointer;
+  }
+  .ghost:hover { color: var(--text); }
+  .ghost.armed { color: var(--danger); }
+
+  ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  li {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px 8px 12px 16px;
+  }
+  .info { min-width: 0; }
+  .name { font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .meta { margin-top: 3px; font-size: 13px; color: var(--muted); }
+  .time { font-size: 18px; font-weight: 700; }
+  .del {
+    width: 34px; height: 34px; border: 0; border-radius: 10px;
+    background: none; color: var(--muted); cursor: pointer;
+    display: grid; place-items: center;
+  }
+  .del:hover { background: var(--surface-2); color: var(--danger); }
+  .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 22px 0 6px; }
+
+  /* Копия данных */
+  details.backup {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 0 16px;
+  }
+  details.backup summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 14px 0;
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 8px;
+  }
+  details.backup summary::-webkit-details-marker { display: none; }
+  details.backup summary::after {
+    content: "";
+    width: 8px; height: 8px;
+    border-right: 2px solid var(--muted);
+    border-bottom: 2px solid var(--muted);
+    transform: rotate(45deg) translate(-2px, -2px);
+    transition: transform .15s;
+  }
+  details.backup[open] summary::after { transform: rotate(-135deg) translate(-2px, -2px); }
+  details.backup summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .backup-body { padding-bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .backup-body p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+  textarea {
+    width: 100%;
+    min-height: 96px;
+    resize: vertical;
+    background: var(--surface-2);
+    border: 1px solid transparent;
+    border-radius: 12px;
+    color: var(--text);
+    font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    padding: 12px 14px;
+    outline: none;
+  }
+  textarea::placeholder { color: #4a5568; }
+  textarea:focus-visible { border-color: var(--accent); background: #202a38; }
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .btn {
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    color: var(--text);
+    border-radius: 12px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 8px;
+    cursor: pointer;
+    transition: filter .15s, border-color .15s;
+  }
+  .btn:hover { border-color: #3a475b; }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn.full { grid-column: 1 / -1; }
+  .btn.armed { color: var(--danger); border-color: var(--danger); }
+  .io-msg { min-height: 0; font-size: 13px; margin: 0; color: var(--muted); }
+  .io-msg:empty { display: none; }
+  .io-msg.ok { color: #7fd1a0; }
+  .io-msg.err { color: var(--danger); }
+
+  button:disabled { opacity: .5; cursor: wait; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  @media (max-width: 360px) { .total-value { font-size: 64px; } }
+</style>
+</head>
+<body>
+<main>
+  <a class="account-link" id="accountLink" href="registration.html">Войти</a>
+  <section class="total" aria-live="polite">
+    <div class="total-label">Общий налёт</div>
+    <div class="total-value">
+      <span id="tH">0</span><span class="unit">ч</span><span id="tM">00</span><span class="unit">мин</span>
+    </div>
+    <div class="total-sub">
+      <span>В часах: <b id="dec">0,00</b></span>
+      <span>Заданий: <b id="cnt">0</b></span>
+    </div>
+  </section>
+
+  <section class="stats" aria-live="polite">
+    <div class="stat"><span>Заходы</span><b id="tA">0</b></div>
+    <div class="stat"><span>Посадки</span><b id="tL">0</b></div>
+  </section>
+
+  <div class="entry" role="group" aria-label="Добавить задание">
+    <label class="field">
+      <span>Часы</span>
+      <input id="h" type="number" inputmode="numeric" min="0" step="1" placeholder="0" autocomplete="off">
+    </label>
+    <label class="field">
+      <span>Минуты</span>
+      <input id="m" type="number" inputmode="numeric" min="0" step="1" placeholder="0" autocomplete="off">
+    </label>
+    <div class="divider"></div>
+    <label class="field">
+      <span>Заходы</span>
+      <input id="a" class="small" type="number" inputmode="numeric" min="0" step="1" placeholder="0" autocomplete="off">
+    </label>
+    <label class="field">
+      <span>Посадки</span>
+      <input id="l" class="small" type="number" inputmode="numeric" min="0" step="1" placeholder="0" autocomplete="off">
+    </label>
+    <label class="field wide">
+      <span>Название задания (необязательно)</span>
+      <input id="label" class="label-input" type="text" placeholder="Например, маршрут" autocomplete="off" maxlength="40">
+    </label>
+    <p class="hint" id="hint" role="alert"></p>
+    <button class="add" id="add" type="button" disabled>Добавить</button>
+  </div>
+
+  <div class="list-head">
+    <span>Добавлено</span>
+    <button class="ghost" id="clear" type="button" hidden>Очистить всё</button>
+  </div>
+  <ul id="list"></ul>
+  <div class="empty" id="empty">Введите время, заходы и посадки и нажмите «Добавить».</div>
+
+  <details class="backup">
+    <summary>Копия данных</summary>
+    <div class="backup-body">
+      <p>Экспорт создаёт текст со всем списком. Сохраните его в заметки или отправьте себе. Для восстановления или переноса на другое устройство вставьте текст ниже и импортируйте.</p>
+      <textarea id="io" spellcheck="false" autocomplete="off" placeholder="Здесь появится текст экспорта. Для импорта вставьте текст сюда."></textarea>
+      <div class="btn-row">
+        <button class="btn full" id="exp" type="button">Экспорт</button>
+        <button class="btn" id="impAdd" type="button" disabled>Импорт: добавить</button>
+        <button class="btn" id="impRep" type="button" disabled>Импорт: заменить</button>
+      </div>
+      <p class="io-msg" id="ioMsg" role="status"></p>
+    </div>
+  </details>
+  <details class="backup" id="syncPanel">
+    <summary>Синхронизация</summary>
+    <div class="backup-body">
+      <p class="io-msg" id="syncStatus" role="status" aria-live="polite">Загрузка журнала…</p>
+      <p>Журнал обновляется автоматически. Если нужно, можно проверить новые записи вручную.</p>
+      <button class="btn" id="refresh" type="button">Обновить журнал</button>
+      <p>Тестовый журнал в аккаунте. Старые записи с устройства не переносятся автоматически.</p>
+      <a class="ghost" href="local.html">Открыть обычный калькулятор →</a>
+    </div>
+  </details>
+</main>
+
+
+<script src="auth-config.js" defer></script>
+<script src="vendor/supabase-2.117.3.js" defer></script>
+<script src="auth-client.js?v=sync-2" defer></script>
+<script src="cloud-store.js" defer></script>
+<script src="cloud.js?v=sync-3" defer></script>
+</body>
+</html>
