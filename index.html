@@ -306,6 +306,7 @@
       <input id="label" class="label-input" type="text" placeholder="Например, маршрут" autocomplete="off" maxlength="40">
     </label>
     <p class="hint" id="hint" role="alert"></p>
+    <p class="io-msg" id="modeNote" style="grid-column:1 / -1" role="status"></p>
     <button class="add" id="add" type="button" disabled>Добавить</button>
   </div>
 
@@ -335,8 +336,7 @@
       <p class="io-msg" id="syncStatus" role="status" aria-live="polite">Загрузка журнала…</p>
       <p>Журнал обновляется автоматически. Если нужно, можно проверить новые записи вручную.</p>
       <button class="btn" id="refresh" type="button">Обновить журнал</button>
-      <p>Тестовый журнал в аккаунте. Старые записи с устройства не переносятся автоматически.</p>
-      <a class="ghost" href="local.html">Открыть обычный калькулятор →</a>
+      <p>Записи, добавленные без входа, остаются на устройстве. В журнал аккаунта их можно перенести через экспорт и импорт.</p>
     </div>
   </details>
 </main>
@@ -346,6 +346,7 @@
 <script src="vendor/supabase-2.117.3.js" defer></script>
 <script src="auth-client.js?v=sync-2" defer></script>
 <script src="cloud-store.js" defer></script>
-<script src="cloud.js?v=sync-3" defer></script>
+<script src="guest-store.js?v=guest-1" defer></script>
+<script src="cloud.js?v=guest-1" defer></script>
 </body>
 </html>

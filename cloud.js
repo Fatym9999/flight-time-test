@@ -7,12 +7,17 @@
   function status(text, error) {
     $("syncStatus").textContent = text;
     $("syncStatus").className = "io-msg" + (error ? " err" : "");
-    if (error && $("syncPanel")) $("syncPanel").open = true;
+    if (!ownerId && $("modeNote")) {
+      $("modeNote").textContent = text;
+      $("modeNote").className = "io-msg" + (error ? " err" : "");
+    }
+    if (error && $("syncPanel")) { $("syncPanel").hidden = false; $("syncPanel").open = true; }
   }
   function controls() {
     ["add", "impAdd", "impRep", "clear"].forEach(function (id) { $(id).disabled = busy || !ready; });
     $("refresh").disabled = busy || !store;
-    fields.forEach(function (field) { field.disabled = busy || !ready; });
+    // Typing is available during account checks and background reads.
+    fields.forEach(function (field) { field.disabled = busy && writing; });
     document.querySelectorAll(".del").forEach(function (button) { button.disabled = busy || !ready; });
   }
   function disarm() {
@@ -52,6 +57,8 @@
     disarm(); controls();
   }
   function failure(error, loading) {
+    if (error && error.message === "LOCAL_READ_FAILED") return "Не удалось прочитать записи на устройстве. Данные не удалены. Проверьте доступ браузера к хранилищу и обновите страницу.";
+    if (error && error.message === "LOCAL_WRITE_FAILED") return "Браузер не смог сохранить запись на устройстве. Введённые поля оставлены. Проверьте доступ к хранилищу и нажмите «Обновить журнал».";
     if (error && error.message === "INVALID_ENTRIES") return "Копия содержит некорректные записи или превышен лимит 10 000 заданий. Ничего не сохранено. Нажмите «Обновить журнал».";
     if (error && error.code === "40001") return "Журнал изменён на другом устройстве. Нажмите «Обновить журнал», затем повторите действие.";
     if (error && ["42P01", "42883", "PGRST202", "PGRST205"].includes(error.code)) {
@@ -72,7 +79,7 @@
       var result = await store.read();
       if (turn !== generation) return;
       entries = result; ready = true; render();
-      status("Журнал загружен из аккаунта. Изменения сохраняются с интернетом.");
+      status(ownerId ? "Журнал загружен из аккаунта. Изменения сохраняются с интернетом." : "Без аккаунта: записи сохраняются на этом устройстве. Для синхронизации войдите.");
     } catch (error) {
       if (turn !== generation) return;
       ready = false; status(failure(error, true), true);
@@ -80,21 +87,22 @@
       if (turn === generation) { busy = false; controls(); }
     }
   }
+  var writing = false;
   async function persist(next) {
     if (busy || !ready) return false;
-    busy = true; controls(); disarm(); status("Сохраняем в аккаунт…");
+    busy = true; writing = true; controls(); disarm(); status(ownerId ? "Сохраняем в аккаунт…" : "Сохраняем на устройстве…");
     var turn = generation;
     try {
       var result = await store.write(next);
       if (turn !== generation) return false;
-      entries = result; render(); status("Сохранено в аккаунте.");
+      entries = result; render(); status(ownerId ? "Сохранено в аккаунте." : "Сохранено на этом устройстве. Для синхронизации войдите.");
       return true;
     } catch (error) {
       if (turn !== generation) return false;
       ready = false; status(failure(error), true);
       return false;
     } finally {
-      if (turn === generation) { busy = false; controls(); }
+      if (turn === generation) { busy = false; writing = false; controls(); }
     }
   }
   async function add() {
@@ -120,7 +128,7 @@
   });
   $("clear").addEventListener("click", function () {
     if (clearArmed) { persist([]); return; }
-    clearArmed = true; $("clear").textContent = "Удалить из аккаунта? Ещё раз";
+    clearArmed = true; $("clear").textContent = ownerId ? "Удалить из аккаунта? Ещё раз" : "Удалить с устройства? Ещё раз";
     setTimeout(disarm, 3000);
   });
   $("exp").addEventListener("click", function () {
@@ -138,14 +146,14 @@
         return { min: entry.min, appr: entry.appr, land: entry.land, label: entry.label };
       });
       if (await persist(replace ? next : entries.concat(next))) {
-        $("io").value = ""; $("ioMsg").textContent = "Импорт сохранён в аккаунте: " + next.length + " заданий.";
+        $("io").value = ""; $("ioMsg").textContent = (ownerId ? "Импорт сохранён в аккаунте: " : "Импорт сохранён на устройстве: ") + next.length + " заданий.";
       }
     } catch (error) { $("ioMsg").textContent = "Не удалось прочитать копию. Вставьте полный текст экспорта."; }
   }
   $("impAdd").addEventListener("click", function () { disarm(); importEntries(false); });
   $("impRep").addEventListener("click", function () {
     if (replaceArmed) { disarm(); importEntries(true); return; }
-    replaceArmed = true; $("impRep").textContent = "Заменить в аккаунте? Ещё раз";
+    replaceArmed = true; $("impRep").textContent = ownerId ? "Заменить в аккаунте? Ещё раз" : "Заменить на устройстве? Ещё раз";
     setTimeout(disarm, 3000);
   });
   $("refresh").addEventListener("click", refresh);
@@ -155,24 +163,43 @@
     if (!document.hidden && ready && !busy) refresh();
   });
   setInterval(function () { if (!document.hidden && ready && !busy) refresh(); }, 30000);
-  function clearAccount() {
-    generation++; store = null; ownerId = null; ready = false; busy = false;
-    entries = []; fields.forEach(function (field) { field.value = ""; }); $("io").value = "";
-    render(); status("Войдите в аккаунт, чтобы открыть журнал.");
+  window.addEventListener("storage", function (event) {
+    if (!ownerId && event.key === "flight-time-test-guest-v1" && !busy) refresh();
+  });
+  function guestMode(clearFields) {
+    generation++; ownerId = null; ready = false; busy = writing = false;
+    store = window.createGuestJournal(); entries = [];
+    if (clearFields) { fields.forEach(function (field) { field.value = ""; }); $("io").value = ""; }
+    $("accountLink").textContent = "Войти";
+    if ($("syncPanel")) $("syncPanel").hidden = true;
+    if ($("modeNote")) $("modeNote").hidden = false;
+    try { entries = store.snapshot(); ready = true; status("Без аккаунта: записи сохраняются на этом устройстве. Для синхронизации войдите."); }
+    catch (error) { status(failure(error, true), true); }
+    render();
   }
-  render();
-  if (!auth || !auth.ready) { status("Откройте тестовую страницу через HTTP и войдите в аккаунт.", true); return; }
+  function accountMode(user) {
+    generation++; ownerId = user.id; busy = writing = false; ready = false; entries = [];
+    $("io").value = "";
+    $("accountLink").textContent = "Мой аккаунт";
+    if ($("syncPanel")) $("syncPanel").hidden = false;
+    if ($("modeNote")) $("modeNote").hidden = true;
+    store = window.createCloudJournal(auth, ownerId); render(); refresh();
+  }
+  guestMode(false);
+  if (!auth || !auth.ready) return;
   if (typeof auth.readJournal !== "function" || typeof auth.saveJournal !== "function") {
     status("Браузер загрузил старый модуль входа. Обновите страницу с очисткой кэша.", true); return;
   }
   auth.onChange(function (event, user) {
-    if (event === "SIGNED_OUT" || (ownerId && user && user.id !== ownerId)) clearAccount();
+    if (event === "SIGNED_OUT") guestMode(true);
+    if (event === "SIGNED_IN" && user && user.id !== ownerId) accountMode(user);
+    if (ownerId && user && user.id !== ownerId && event !== "SIGNED_IN") guestMode(true);
   });
   var initialGeneration = generation;
   auth.currentUser().then(function (user) {
     if (initialGeneration !== generation) return;
-    if (!user) { clearAccount(); return; }
-    ownerId = user.id; $("accountLink").textContent = "Мой аккаунт";
-    store = window.createCloudJournal(auth, ownerId); refresh();
-  }).catch(function () { clearAccount(); status("Не удалось проверить вход. Откройте «Войти».", true); });
+    if (user) accountMode(user);
+  }).catch(function () {
+    if (initialGeneration === generation) status("Не удалось проверить вход. Сейчас записи сохраняются на устройстве. Чтобы открыть аккаунт, нажмите «Войти».");
+  });
 })();

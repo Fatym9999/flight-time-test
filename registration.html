@@ -72,7 +72,7 @@
     <section id="emailStep" aria-labelledby="emailTitle">
       <p class="eyebrow">Ваш личный лётный журнал</p>
       <h1 id="emailTitle">Ваш налёт.<br>Всегда под рукой.</h1>
-      <p class="intro">Вход и регистрация — по почте, без пароля.<br>Ваш журнал доступен с телефона и компьютера после входа.</p>
+      <p class="intro">Вход и регистрация — по почте, без пароля.<br>После входа журнал доступен с телефона и компьютера.</p>
       <div class="card">
         <div class="steps" aria-label="Шаг 1 из 2"><span class="active"></span><span></span></div>
         <form id="emailForm" novalidate>
@@ -83,7 +83,7 @@
           <button class="primary" id="sendCode" type="submit" disabled>Получить код <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></button>
         </form>
       </div>
-      <a class="secondary" href="local.html">Продолжить без аккаунта →</a>
+      <a class="secondary" href="index.html">Продолжить без аккаунта →</a>
       <p class="fine-print">Без аккаунта записи останутся<br><strong>только в браузере этого устройства.</strong></p>
     </section>
 
@@ -112,14 +112,14 @@
       <h1 id="successTitle" tabindex="-1">Можно к полётам</h1>
       <p class="intro">Вы вошли как<span class="email-display" id="accountEmail"></span></p>
       <div class="card">
-        <p class="success-copy">Почта подтверждена. Журнал в аккаунте сохраняет записи и загружает их на других устройствах. Для сохранения нужен интернет. Старые записи из обычного калькулятора переносятся только через импорт.</p>
+        <p class="success-copy">Почта подтверждена. Журнал аккаунта синхронизируется между устройствами. Записи, добавленные без входа, остаются на устройстве и не смешиваются с аккаунтом: перенести их можно через экспорт и импорт.</p>
         <a class="primary" href="index.html">Открыть калькулятор →</a>
       </div>
       <button class="secondary" id="signOut" type="button">Выйти на этом устройстве</button>
       <p class="error" id="accountError" role="alert"></p>
     </section>
   </main>
-  <footer><span class="dot" aria-hidden="true"></span>Вход по одноразовому коду · журнал в аккаунте синхронизируется</footer>
+  <footer><span class="dot" aria-hidden="true"></span>Вход по одноразовому коду · синхронизация после входа</footer>
 </div>
 <script src="auth-config.js" defer></script>
 <script src="vendor/supabase-2.117.3.js" defer></script>

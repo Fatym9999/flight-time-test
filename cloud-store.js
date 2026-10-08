@@ -7,6 +7,7 @@
       }) && typeof entry.label === "string" && Array.from(entry.label).length <= 40;
     });
   }
+  window.validFlightEntries = valid;
   window.createCloudJournal = function (auth, userId) {
     var revision = 0, entries = [], busy = false, loaded = false;
     function accept(row, required) {
