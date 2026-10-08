@@ -4,8 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; connect-src https://bjkdfalvbvgjnhxspjxy.supabase.co; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; connect-src https://bjkdfalvbvgjnhxspjxy.supabase.co; form-action 'none'; base-uri 'none'">
 <title>Вход · Калькулятор налёта</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root { color-scheme: dark; --bg: #0d1117; --surface: #151b24; --line: #2a3341; --text: #e8ecf2; --muted: #9aa5b5; --accent: #f0b44c; }
   * { box-sizing: border-box; }
@@ -42,8 +45,9 @@
   .secondary:hover { color: var(--text); }
   .fine-print { margin: 23px 14px 0; color: var(--muted); font-size: 12px; text-align: center; line-height: 1.65; }
   .fine-print strong { color: #c9d1dc; font-weight: 500; }
-  footer { display: flex; align-items: center; justify-content: center; gap: 8px; color: #8793a5; font-size: 11px; text-align: center; line-height: 1.6; }
-  .dot { flex: 0 0 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; color: #8793a5; font-size: 11px; text-align: center; line-height: 1.6; }
+  .footer-part { white-space: nowrap; }
+  .footer-separator { color: var(--accent); }
   .email-display { display: block; margin-top: 4px; color: var(--text); overflow-wrap: anywhere; }
   .code { text-align: center; letter-spacing: .36em; font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; padding-left: 22px; }
   .error { color: #ff969b; font-size: 12px; line-height: 1.5; margin: 10px 0; }
@@ -55,6 +59,7 @@
   button:disabled, input:disabled { opacity: .55; cursor: not-allowed; }
   .setup-notice { margin: 0 0 24px; padding: 14px 16px; border: 1px solid #665032; border-radius: 12px; color: #e9c88e; background: #241e16; font-size: 13px; line-height: 1.65; }
   @media (max-width: 480px) { .shell { padding-left: 20px; padding-right: 20px; } main { padding-top: 44px; } .card { padding: 22px; } .brand { font-size: 13px; } }
+  @media (max-width: 480px) { footer { flex-direction: column; gap: 2px; } .footer-separator { display: none; } }
 </style>
 </head>
 <body>
@@ -70,8 +75,8 @@
     <p class="setup-notice" id="setupNotice" role="status" hidden></p>
     <noscript><p class="setup-notice">Для входа включите JavaScript. Калькулятор доступен по ссылке вверху.</p></noscript>
     <section id="emailStep" aria-labelledby="emailTitle">
-      <p class="eyebrow">Ваш личный лётный журнал</p>
-      <h1 id="emailTitle">Ваш налёт.<br>Всегда под рукой.</h1>
+      <p class="eyebrow">Калькулятор налёта</p>
+      <h1 id="emailTitle">Вход в аккаунт</h1>
       <p class="intro">Вход и регистрация — по почте, без пароля.<br>После входа журнал доступен с телефона и компьютера.</p>
       <div class="card">
         <div class="steps" aria-label="Шаг 1 из 2"><span class="active"></span><span></span></div>
@@ -119,7 +124,7 @@
       <p class="error" id="accountError" role="alert"></p>
     </section>
   </main>
-  <footer><span class="dot" aria-hidden="true"></span>Вход по одноразовому коду · синхронизация после входа</footer>
+  <footer><span class="footer-part">Вход по коду</span><span class="footer-separator" aria-hidden="true">·</span><span class="footer-part">Синхронизация с аккаунтом</span></footer>
 </div>
 <script src="auth-config.js" defer></script>
 <script src="vendor/supabase-2.117.3.js" defer></script>
